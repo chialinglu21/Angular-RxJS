@@ -8,6 +8,7 @@ import { ProductDetailComponent } from './product-list-alt/product-detail.compon
 
 import { SharedModule } from '../shared/shared.module';
 import { ProductListAltComponent } from './product-list-alt/product-list-alt.component';
+import { ProductSearchComponent } from './product-search/product-search.component';
 
 @NgModule({
   imports: [
@@ -19,8 +20,12 @@ import { ProductListAltComponent } from './product-list-alt/product-list-alt.com
         component: ProductListComponent
       },
       {
-        path: ':alternate',
+        path: 'alternate',
         component: ProductShellComponent
+      },
+      {
+        path: 'search',
+        component: ProductSearchComponent
       }
     ])
   ],
@@ -28,7 +33,8 @@ import { ProductListAltComponent } from './product-list-alt/product-list-alt.com
     ProductListComponent,
     ProductShellComponent,
     ProductListAltComponent,
-    ProductDetailComponent
+    ProductDetailComponent,
+    ProductSearchComponent
   ]
 })
 export class ProductModule { }

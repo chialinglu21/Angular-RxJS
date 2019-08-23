@@ -11,6 +11,7 @@ import { AppComponent } from './app.component';
 import { WelcomeComponent } from './home/welcome.component';
 import { PageNotFoundComponent } from './page-not-found.component';
 
+
 @NgModule({
   imports: [
     BrowserModule,
@@ -22,6 +23,7 @@ import { PageNotFoundComponent } from './page-not-found.component';
     AppComponent,
     WelcomeComponent,
     PageNotFoundComponent
+
   ],
   bootstrap: [AppComponent]
 })

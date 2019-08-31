@@ -16,7 +16,7 @@ export class ProductListComponent {
   errorMessage = '';
   categories;
 
-  products$ = this.productService.products$;
+  products$ = this.productService.productsWithCategory$;
   sub: Subscription;
 
   constructor(private productService: ProductService) { }

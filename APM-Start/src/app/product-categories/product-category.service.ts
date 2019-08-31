@@ -4,12 +4,17 @@ import { Injectable } from '@angular/core';
 import { throwError } from 'rxjs';
 
 import { ProductCategory } from './product-category';
+import { httpClientInMemBackendServiceFactory } from 'angular-in-memory-web-api';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductCategoryService {
   private productCategoriesUrl = 'api/productCategories';
+
+  productCategory$ = this.http.get<ProductCategory[]>(this.productCategoriesUrl)
+    .pipe(catchError(this.handleError));
 
   constructor(private http: HttpClient) { }
 

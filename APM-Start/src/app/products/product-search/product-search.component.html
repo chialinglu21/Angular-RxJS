@@ -1,6 +1,6 @@
-<input id="search" class="form-control" type="text" [value]="inputValueAction$ | async" (input)="changedKeyword()" />
+<input id="search" class="form-control" type="text" [value]="inputValueAction$ | async" (input)="changedKeyword($event.target.value)" />
 
-<div *ngFor="let item of docList$ | async">
+<div *ngFor="let item of documents$ | async">
   <h6>{{item.title}}</h6>
   <p>{{item.body}}</p>
 

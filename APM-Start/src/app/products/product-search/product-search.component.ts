@@ -22,25 +22,25 @@ export class ProductSearchComponent implements OnInit {
   private keywordSubject = new BehaviorSubject<string>('2015');
   inputValueAction$ = this.keywordSubject.asObservable();
 
-  searchNode = document.getElementById('search');
-
   docList$ = of(DOCS);
 
   documents$ = combineLatest([
     this.docList$,
     this.inputValueAction$
   ]).pipe(
-    map(([docs, keyword]) =>
-      docs.filter(f => {
+    map(([docs, keyword]) => {
+      const searchResult = [...this.elsModule.search(keyword)];
+      console.log(keyword, searchResult);
+
+      return docs.filter(f => {
         if (keyword) {
-          const searchResult = this.elsModule.search(keyword);
-          if (searchResult.length === 0 || !searchResult.find(fd => fd.ref === f.id.toString)) {
+          if (searchResult.length === 0 || !searchResult.find(fd => fd.ref === f.id.toString())) {
             return false;
           }
         }
         return true;
-      })
-    ),
+      });
+    }),
     tap(doc => console.log(doc))
   );
 
@@ -50,24 +50,17 @@ export class ProductSearchComponent implements OnInit {
   ngOnInit() {
     DOCS.forEach(f => this.elsModule.addDoc(f));
 
-    // let resultEla = this.elsModule.search('2015', {
+    // const resultEla = this.elsModule.search('2015', {
     //     fields: {
     //       title: { boost: 3},
     //       body: { boost: 2}
     //     }
     //   });
 
-    // console.log(resultEla);
-    //fromEventPattern(this.addChangeHandler).subscribe(console.log);
-
   }
 
-  // addChangeHandler(handler) {
-  //   document.addEventListener('input', handler);
-  // }
-
-  changedKeyword(): void {
-    console.log(this.inputValueAction$);
+  changedKeyword(newValue: string): void {
+    this.keywordSubject.next(newValue);
   }
 
 }

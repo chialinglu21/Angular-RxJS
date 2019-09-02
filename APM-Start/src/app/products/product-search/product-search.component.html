@@ -1,1 +1,7 @@
-<input class="form-control" [value]="inputValue$ | async" />
+<input id="search" class="form-control" type="text" [value]="inputValueAction$ | async" (input)="changedKeyword()" />
+
+<div *ngFor="let item of docList$ | async">
+  <h6>{{item.title}}</h6>
+  <p>{{item.body}}</p>
+
+</div>

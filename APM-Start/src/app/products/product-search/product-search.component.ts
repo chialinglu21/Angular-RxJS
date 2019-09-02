@@ -1,6 +1,8 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import * as els from 'elasticlunr';
-import { Observable } from 'rxjs';
+import { Observable, BehaviorSubject, of, from, fromEventPattern, combineLatest, observable } from 'rxjs';
+import { DOCS } from './document.config';
+import { catchError, map, tap } from 'rxjs/operators';
 
 
 @Component({
@@ -11,56 +13,61 @@ import { Observable } from 'rxjs';
 })
 export class ProductSearchComponent implements OnInit {
 
-  inputValue$: Observable<string>;
+  elsModule = els(function() {
+    this.addField('title');
+    this.addField('body');
+    this.setRef('id');
+  });
+
+  private keywordSubject = new BehaviorSubject<string>('2015');
+  inputValueAction$ = this.keywordSubject.asObservable();
+
+  searchNode = document.getElementById('search');
+
+  docList$ = of(DOCS);
+
+  documents$ = combineLatest([
+    this.docList$,
+    this.inputValueAction$
+  ]).pipe(
+    map(([docs, keyword]) =>
+      docs.filter(f => {
+        if (keyword) {
+          const searchResult = this.elsModule.search(keyword);
+          if (searchResult.length === 0 || !searchResult.find(fd => fd.ref === f.id.toString)) {
+            return false;
+          }
+        }
+        return true;
+      })
+    ),
+    tap(doc => console.log(doc))
+  );
+
 
   constructor() { }
 
   ngOnInit() {
-    const elsModule = els(function() {
-      this.addField('title');
-      this.addField('body');
-      this.setRef('id');
-    });
+    DOCS.forEach(f => this.elsModule.addDoc(f));
 
-    const doc1 ={
-        'id': 1,
-        'title': 'Oracle released its latest database Oracle 12g',
-        'body': 'Yestaday Oracle has released its new database Oracle 12g, this would make more money for this company and lead to a nice profit report of annual year.'
-    };
+    // let resultEla = this.elsModule.search('2015', {
+    //     fields: {
+    //       title: { boost: 3},
+    //       body: { boost: 2}
+    //     }
+    //   });
 
-    const doc2 = [{
-        'id': 1,
-        'title': 'Oracle released its latest database Oracle 12g',
-        'body': 'Yestaday Oracle has released its new database Oracle 12g, this would make more money for this company and lead to a nice profit report of annual year.'
-    },{
-        'id': 2,
-        'title': 'Oracle released its profit report of 2015',
-        'body': 'As expected, Oracle released its profit report of, during the good sales of database and hardware, Oracle\'s profit of reached 12.5 Billion.'
-    },{
-        'id': 3,
-        'title': 'MySQL released its profit report of',
-        'body': 'As expected, MySQL released its profit report of 2015, during the good sales of database and hardware,  profit of 2015 reached 12.5 Billion.'
-    }];
+    // console.log(resultEla);
+    //fromEventPattern(this.addChangeHandler).subscribe(console.log);
 
-    doc2.forEach(f => elsModule.addDoc(f));
+  }
 
-    //this.inputValue$.subscribe(console.log) ;
+  // addChangeHandler(handler) {
+  //   document.addEventListener('input', handler);
+  // }
 
-    let resultEla = elsModule.search(this.inputValue$, {
-        fields: {
-          title: { boost: 3},
-          body: { boost: 2}
-        }
-      });
-
-    console.log(elsModule);
-    console.log(resultEla);
-    // const index = elasticlunr(function() {
-    //   this.addField('title');
-    //   this.addField('body');
-    //   this.setRef('id');
-    // });
-
+  changedKeyword(): void {
+    console.log(this.inputValueAction$);
   }
 
 }

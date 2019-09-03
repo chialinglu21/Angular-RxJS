@@ -3,6 +3,7 @@ import * as els from 'elasticlunr';
 import { Observable, BehaviorSubject, of, from, fromEventPattern, combineLatest, observable } from 'rxjs';
 import { DOCS } from './document.config';
 import { catchError, map, tap } from 'rxjs/operators';
+import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 
 @Component({
@@ -19,7 +20,7 @@ export class ProductSearchComponent implements OnInit {
     this.setRef('id');
   });
 
-  private keywordSubject = new BehaviorSubject<string>('2015');
+  private keywordSubject = new BehaviorSubject<string>('Oracle');
   inputValueAction$ = this.keywordSubject.asObservable();
 
   docList$ = of(DOCS);
@@ -30,7 +31,6 @@ export class ProductSearchComponent implements OnInit {
   ]).pipe(
     map(([docs, keyword]) => {
       const searchResult = [...this.elsModule.search(keyword)];
-      console.log(keyword, searchResult);
 
       return docs.filter(f => {
         if (keyword) {
@@ -49,6 +49,7 @@ export class ProductSearchComponent implements OnInit {
 
   ngOnInit() {
     DOCS.forEach(f => this.elsModule.addDoc(f));
+    this.elsModule.clearStopWords();
 
     // const resultEla = this.elsModule.search('2015', {
     //     fields: {
@@ -56,7 +57,6 @@ export class ProductSearchComponent implements OnInit {
     //       body: { boost: 2}
     //     }
     //   });
-
   }
 
   changedKeyword(newValue: string): void {

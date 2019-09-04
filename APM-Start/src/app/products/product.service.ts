@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import { Observable, throwError, combineLatest, BehaviorSubject, Subject } from 'rxjs';
-import { catchError, tap, map } from 'rxjs/operators';
+import { Observable, throwError, combineLatest, BehaviorSubject, Subject, merge } from 'rxjs';
+import { catchError, tap, map, scan, shareReplay } from 'rxjs/operators';
 
 import { Product } from './product';
 import { Supplier } from '../suppliers/supplier';
@@ -15,16 +15,17 @@ import { ProductCategoryService } from '../product-categories/product-category.s
 export class ProductService {
   private productsUrl = 'api/products';
   private suppliersUrl = this.supplierService.suppliersUrl;
+
   private selectedProductAction = new Subject<number>();
   selectedProductId$ = this.selectedProductAction.asObservable();
 
-  products$ = this.http.get<Product[]>(this.productsUrl)
-      .pipe(
+  private insertProductSubject = new Subject<Product>();
+  insertProductAction$ = this.insertProductSubject.asObservable();
 
-        tap(data => console.log('Products: ', JSON.stringify(data))),
-        catchError(this.handleError)
-      );
-
+  products$ = this.http.get<Product[]>(this.productsUrl).pipe(
+    tap(data => console.log('Products: ', JSON.stringify(data))),
+    catchError(this.handleError)
+  );
 
   productsWithCategory$ = combineLatest([
     this.products$,
@@ -37,8 +38,12 @@ export class ProductService {
             searchKey: [product.productName],
             category: categorys.find(fd => fd.id === product.categoryId).name
           }) as Product)
+    ),
+    shareReplay(1)
+  );
 
-    )
+  productWithAdd$ = merge(this.productsWithCategory$, this.insertProductAction$).pipe(
+    scan((acc: Product[], value: Product) => [...acc, value])
   );
 
   selectedProduct$ = combineLatest([
@@ -47,7 +52,8 @@ export class ProductService {
   ]).pipe(
     map(([products, selectedId]) =>
       products.find(f => f.id === selectedId)
-    )
+    ),
+    shareReplay(1)
   );
 
   constructor(private http: HttpClient,
@@ -60,12 +66,17 @@ export class ProductService {
     this.selectedProductAction.next(id);
   }
 
+  addNewProduct(value?: Product): void {
+    const newValue = value || this.fakeProduct();
+    this.insertProductSubject.next(newValue);
+  }
+
   private fakeProduct() {
     return {
       id: 42,
       productName: 'Another One',
       productCode: 'TBX-0042',
-      dice: 8.9,
+      price: 8.9,
       categoryId: 3,
       category: 'Toolbox',
       quantityInStock: 30

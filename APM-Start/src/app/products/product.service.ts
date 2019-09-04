@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 
-import { Observable, throwError, combineLatest } from 'rxjs';
+import { Observable, throwError, combineLatest, BehaviorSubject, Subject } from 'rxjs';
 import { catchError, tap, map } from 'rxjs/operators';
 
 import { Product } from './product';
@@ -15,6 +15,8 @@ import { ProductCategoryService } from '../product-categories/product-category.s
 export class ProductService {
   private productsUrl = 'api/products';
   private suppliersUrl = this.supplierService.suppliersUrl;
+  private selectedProductAction = new Subject<number>();
+  selectedProductId$ = this.selectedProductAction.asObservable();
 
   products$ = this.http.get<Product[]>(this.productsUrl)
       .pipe(
@@ -22,6 +24,7 @@ export class ProductService {
         tap(data => console.log('Products: ', JSON.stringify(data))),
         catchError(this.handleError)
       );
+
 
   productsWithCategory$ = combineLatest([
     this.products$,
@@ -38,17 +41,31 @@ export class ProductService {
     )
   );
 
+  selectedProduct$ = combineLatest([
+    this.productsWithCategory$,
+    this.selectedProductId$
+  ]).pipe(
+    map(([products, selectedId]) =>
+      products.find(f => f.id === selectedId)
+    )
+  );
+
   constructor(private http: HttpClient,
               private supplierService: SupplierService,
               private productCategoryService: ProductCategoryService) { }
+
+
+
+  selectedProductIdChange(id: number): void {
+    this.selectedProductAction.next(id);
+  }
 
   private fakeProduct() {
     return {
       id: 42,
       productName: 'Another One',
       productCode: 'TBX-0042',
-      description: 'Our new product',
-      price: 8.9,
+      dice: 8.9,
       categoryId: 3,
       category: 'Toolbox',
       quantityInStock: 30

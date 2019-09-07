@@ -1,7 +1,32 @@
-<input id="search" class="form-control" type="text" [value]="inputValueAction$ | async" (input)="changedKeyword($event.target.value)" />
 
-<div *ngFor="let item of documents$ | async">
-  <h6>{{item.title}}</h6>
-  <p>{{item.body}}</p>
+<div class="row">
+  <div class="col-4">
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label>body</label>
+      <textarea class="form-control" rows="4"></textarea>
+    </div>
+
+    <button type="submit" class="btn btn-info btn-block">Add Docs</button>
+  </div>
+
+  <div class="col-8">
+    <div class="row my-3">
+      <input id="search" class="form-control" type="text" [value]="inputValueAction$ | async" (input)="changedKeyword($event.target.value)" />
+
+    </div>
+
+    <div class="row">
+      <div class="py-2" *ngFor="let item of documents$ | async">
+        <h6>{{item.title}}</h6>
+        <p>{{item.body}}</p>
+      </div>
+    </div>
+
+  </div>
 
 </div>

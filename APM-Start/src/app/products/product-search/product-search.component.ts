@@ -3,8 +3,8 @@ import * as els from 'elasticlunr';
 import { Observable, BehaviorSubject, of, from, fromEventPattern, combineLatest, observable } from 'rxjs';
 import { DOCS } from './document.config';
 import { catchError, map, tap } from 'rxjs/operators';
-import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
-
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { Document } from './document';
 
 @Component({
   selector: 'pm-product-search',
@@ -19,6 +19,8 @@ export class ProductSearchComponent implements OnInit {
     this.addField('body');
     this.setRef('id');
   });
+
+  docForm: FormGroup;
 
   private keywordSubject = new BehaviorSubject<string>('Oracle');
   inputValueAction$ = this.keywordSubject.asObservable();
@@ -45,18 +47,13 @@ export class ProductSearchComponent implements OnInit {
   );
 
 
-  constructor() { }
+  constructor(private fb: FormBuilder) {}
 
   ngOnInit() {
     DOCS.forEach(f => this.elsModule.addDoc(f));
     this.elsModule.clearStopWords();
 
-    // const resultEla = this.elsModule.search('2015', {
-    //     fields: {
-    //       title: { boost: 3},
-    //       body: { boost: 2}
-    //     }
-    //   });
+    this.docForm = this.fb.group(new Document());
   }
 
   changedKeyword(newValue: string): void {

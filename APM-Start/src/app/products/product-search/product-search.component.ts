@@ -1,9 +1,9 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import * as els from 'elasticlunr';
-import { Observable, BehaviorSubject, of, from, fromEventPattern, combineLatest, observable } from 'rxjs';
+import { Observable, BehaviorSubject, of, from, fromEventPattern, combineLatest, observable, Subject, merge } from 'rxjs';
 import { DOCS } from './document.config';
-import { catchError, map, tap } from 'rxjs/operators';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { catchError, map, tap, scan } from 'rxjs/operators';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Document } from './document';
 
 @Component({
@@ -13,6 +13,15 @@ import { Document } from './document';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductSearchComponent implements OnInit {
+
+  tokenConfig = {
+  fields: {
+        title: {boost: 2},
+        body: {boost: 1}
+    },
+    bool: 'OR',
+    expand: true
+  };
 
   elsModule = els(function() {
     this.addField('title');
@@ -25,14 +34,24 @@ export class ProductSearchComponent implements OnInit {
   private keywordSubject = new BehaviorSubject<string>('Oracle');
   inputValueAction$ = this.keywordSubject.asObservable();
 
+  private insertDocumentSubject = new Subject<Document>();
+  insertDocumentAction$ = this.insertDocumentSubject.asObservable();
+
   docList$ = of(DOCS);
 
+  documentsWithAdd$ = merge(this.docList$, this.insertDocumentAction$).pipe(
+    scan((acc: Document[], value: Document) => {
+      this.elsModule.addDoc(value);
+      return [...acc, value];
+    })
+  );
+
   documents$ = combineLatest([
-    this.docList$,
+    this.documentsWithAdd$,
     this.inputValueAction$
   ]).pipe(
     map(([docs, keyword]) => {
-      const searchResult = [...this.elsModule.search(keyword)];
+      const searchResult = [...this.elsModule.search(keyword, this.tokenConfig)];
 
       return docs.filter(f => {
         if (keyword) {
@@ -43,21 +62,29 @@ export class ProductSearchComponent implements OnInit {
         return true;
       });
     }),
-    tap(doc => console.log(doc))
+    tap(doc => console.log('search result: ', doc))
   );
 
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder) {
+    this.docForm = this.fb.group({
+      id: 6,
+      title: ['', Validators.required],
+      body: ['', Validators.required]
+    });
+  }
 
   ngOnInit() {
     DOCS.forEach(f => this.elsModule.addDoc(f));
-    this.elsModule.clearStopWords();
-
-    this.docForm = this.fb.group(new Document());
+    els.clearStopWords();
   }
 
   changedKeyword(newValue: string): void {
     this.keywordSubject.next(newValue);
   }
 
+  addNewDoc(newDoc: Document) {
+    this.insertDocumentSubject.next(newDoc);
+    this.docForm.reset();
+  }
 }
